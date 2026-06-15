@@ -1,0 +1,73 @@
+/* Navbar Wrapper */
+.navigation-wrapper {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 9999;
+background-color: aqua;
+  transition: all 0.4s ease;
+}
+
+/* Initial State */
+.main-nav {
+  background: transparent;
+  transition: all 0.4s ease;
+  background-color: rgb(26, 142, 88);
+}
+
+/* Glassmorphism on Scroll */
+.navigation-wrapper.scrolled {
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+
+  background: rgba(0, 0, 0, 0.75);
+
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+/* Hide Navbar */
+.navigation-wrapper.hide-nav {
+  transform: translateY(-100%);
+}
+
+/* Smooth Link Animation */
+.main-nav .nav-link {
+  color: white !important;
+  position: relative;
+  margin: 0 10px;
+  transition: all 0.3s ease;
+}
+
+.main-nav .nav-link::after {
+  content: "";
+  position: absolute;
+
+  left: 0;
+  bottom: -5px;
+
+  width: 0;
+  height: 2px;
+
+  background: #56c2e3;
+  transition: width 0.3s ease;
+}
+
+.main-nav .nav-link:hover::after {
+  width: 100%;
+}
+
+.main-nav .nav-link:hover {
+  transform: translateY(-2px);
+  color: #56c2e3 !important;
+}
+
+/* Logo Animation */
+.navigation-wrapper.scrolled img {
+  width: 60px;
+  height: 50px;
+  transition: all 0.3s ease;
+}
+
+.navigation-wrapper img {
+  transition: all 0.3s ease;
+}
