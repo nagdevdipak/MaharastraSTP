@@ -9,7 +9,7 @@ import {
   CardTitle,
   Button,
   Container,
-  Row,
+  Row,Form,
   Col,
   Dropdown,
   Badge
@@ -34,13 +34,13 @@ const [locations, setLocations] = useState({});
 const [city, setCity] = useState("");
 const [filter, setFilter] = useState("all");
 const [showAll, setShowAll] = useState(false);
-
+const [citySearch, setCitySearch] = useState(city);
 const FetchLocationInfo = async () => {
   try {
     const res = await axios.get("http://localhost:5000/api/locations/findGroupLocation");
 
     const data = res.data.data;
- console.table(data)
+ console.table(JSON.stringify(data))
     setLocations(data);
 
     const firstCity = Object.keys(data)[0];
@@ -141,31 +141,41 @@ const visiblePlaces = showAll
           {/* CITY DROPDOWN */}
 
           <Col lg={4}>
+<div className="mt-3 mt-lg-0 position-relative">
+  <Form.Control
+    type="search"
+    placeholder="Search city..."
+    value={citySearch}
+    onChange={(e) => setCitySearch(e.target.value)}
+    list="city-options"
+  />
 
-            <Dropdown className="mt-3 mt-lg-0" drop="start">
+  <datalist id="city-options">
+    {cities.map((cityName) => (
+      <option key={cityName} value={cityName.toUpperCase()} />
+    ))}
+  </datalist>
 
-              <Dropdown.Toggle variant="success">
+ <Button
+  variant="success"
+  className="mt-2"
+  onClick={() => {
+    const matchedCity = cities.find(
+      (cityName) => cityName.toLowerCase() === citySearch.toLowerCase()
+    );
 
-                {city.toUpperCase()}
+    if (matchedCity) {
+      setCity(matchedCity);
 
-              </Dropdown.Toggle>
-<Dropdown.Menu>
-  {cities.map((cityName) => (
-    <Dropdown.Item
-      key={cityName}
-    
-      onClick={() => {
-        setCity(cityName);
-        setFilter("all");
-        setShowAll(false);
-      }}
-    >
-      {cityName.toUpperCase()}
-    </Dropdown.Item>
-  ))}
-</Dropdown.Menu>
-
-            </Dropdown>
+      // Reset type selection
+      setFilter("all");
+      setShowAll(false);
+    }
+  }}
+>
+  Search
+</Button>
+</div>
 
           </Col>
 

@@ -43,24 +43,6 @@ const fetchfoodServices = async () => {
   }
 };
 
-// const getAllGroupServicesByCityLocation = async(req,res)=>{
-//   try{
-//     const res = await axios.get(`http://location:5000/api/services/getCombinedServices`)
-//     console.log('All grouped services',res.data)
-//     setAllServices("allGroupedServices",res.data)
-//   }catch(err){
-//     console.error(err)
-//   }
-// }
-// useEffect(() => {
-//   if (state) {
-//     setFilter(selectedCity);
-//     setLocation(selectedLocationFromNav);
-//     setService("stay");
-//     setAllServices([])
-//   }
-// }, [state]);
-
 useEffect(() => {
   fetchStayservices();
   fetchfoodServices();

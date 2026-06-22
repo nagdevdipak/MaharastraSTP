@@ -71,3 +71,52 @@ background-color: aqua;
 .navigation-wrapper img {
   transition: all 0.3s ease;
 }
+
+.carousel-wrapper {
+  display: flex;
+  gap: 20px;
+  overflow-x: auto;
+  padding: 20px;
+}
+.carousel-wrapper {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+
+  gap: 25px;
+  overflow-x: auto;
+  padding: 20px;
+}
+
+/* each card container */
+.carousel2d {
+  flex: 0 0 auto;
+  width: 250px;
+  animation :slide 2s 1 ;
+}
+
+/* card style */
+.card-inner {
+  background: #f6f3f3;
+  color: green;
+  border-radius: 15px;
+  padding: 15px;
+  text-align: center;
+
+  box-shadow: 0 0 20px #49f0ad;
+  transition: 0.3s;
+}
+
+/* hover effect */
+.card-inner:hover {
+  transform: scale(1.05);
+}
+@keyframes slide{
+  from{
+    transform: translateX(-100%);
+  }
+  to{
+    transform: translateX(0);
+  }
+}

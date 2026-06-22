@@ -12,7 +12,12 @@ import {
 import { data, useNavigate } from "react-router-dom"
 import './index.css'
 import './assets/Style.css'
+  import { useLocation } from "react-router-dom";
 const VisitorRegistrationForm = () => {
+  const location = useLocation();
+
+  const params = new URLSearchParams(location.search);
+  const qrLocationId = params.get("locationId");
 
   const navigate = useNavigate();
 const [locations, setLocations] = useState([]);
@@ -94,36 +99,93 @@ const verifyOTP = async () => {
   }
 };
 
+useEffect(() => {
+  if (!qrLocationId || locations.length === 0) return;
+
+  const matched = locations.find(l => l._id === qrLocationId);
+
+  if (matched) {
+    setFormData(prev => ({
+      ...prev,
+      location: matched._id,
+      latitude: matched.latitude,
+      longitude: matched.longitude
+    }));
+  }
+}, [qrLocationId, locations]);
+
+const getUserLocation = () =>
+  new Promise((resolve, reject) => {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        resolve({
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude
+        });
+      },
+      (err) => reject(err)
+    );
+  });
+
+  const getDistance = (lat1, lon1, lat2, lon2) => {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+
+  const a =
+    Math.sin(dLat/2)**2 +
+    Math.cos(lat1*Math.PI/180) *
+    Math.cos(lat2*Math.PI/180) *
+    Math.sin(dLon/2)**2;
+
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+  return R * c;
+};
   // ✅ Final Save
-  const registerVisitor = async (e) => {
-      e.preventDefault();
-    try {
-      const res = await axios.post(
-        "http://localhost:5000/api/visitor/register",
-        formData
-      );
+const registerVisitor = async (e) => {
+  e.preventDefault();
 
-      alert("Visitor Registered Successfully");
-localStorage.setItem("visitor", res.data.data.full_name);
-localStorage.setItem("visitorId",res.data.data._id)
-localStorage.setItem(
-  "location",
-  res.data.data.location || formData.location
-);
-console.log("Visitor:", localStorage.getItem("visitor"));
-console.log("VisitorId:", localStorage.getItem("visitorId"));
-console.log("Location:", localStorage.getItem("location"));
-      // ✅ Send data to next page
-      navigate("/LocationCapture", { state: res.data.data.full_name , location: res.data.data.location?.name || formData.location?.name});
+  try {
+    // 1. Get user GPS
+    const pos = await getUserLocation();
 
-    } catch (err) {
-  console.error("FULL ERROR:", err);
-  console.log("STATUS:", err.response?.status);
-console.log("SERVER:", err.response?.data);
-console.log("MESSAGE:", err.response?.data?.message)
-  alert(err.response?.data?.message || "Server error");
-}
-  };
+    const userLat = pos.lat;
+    const userLng = pos.lng;
+
+    // 2. Compare with selected location
+    const distance = getDistance(
+      userLat,
+      userLng,
+      formData.latitude,
+      formData.longitude
+    );
+
+    console.log("Distance:", distance);
+
+    // 3. Set radius (example 0.5 km)
+    if (distance > 0.5) {
+      alert("❌ You are not at the correct location");
+      return;
+    }
+
+    // 4. If OK → register
+    const res = await axios.post(
+      "http://localhost:5000/api/visitor/register",
+      formData
+    );
+
+    alert("Visitor Registered Successfully");
+
+    navigate("/LocationCapture", {
+      state: res.data.data.full_name
+    });
+
+  } catch (err) {
+    console.error(err);
+    alert("Location verification failed");
+  }
+};
 
 useEffect(() => {
   axios.get("http://localhost:5000/api/locations/findAll")

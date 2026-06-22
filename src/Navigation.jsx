@@ -8,23 +8,21 @@ useEffect(() => {
   const navbar = document.getElementById("navbar");
 
   const handleScroll = () => {
-    const currentScroll =
-      window.pageYOffset ||
-      document.documentElement.scrollTop;
+    const currentScroll = window.pageYOffset;
 
     if (currentScroll > 100) {
-      navbar.classList.add("fixed-nav");
+      navbar.classList.add("scrolled");
     } else {
-      navbar.classList.remove("fixed-nav");
+      navbar.classList.remove("scrolled");
     }
 
-    if (currentScroll < lastScrollTop) {
-      navbar.classList.add("show-nav");
+    if (currentScroll > lastScrollTop) {
+      navbar.classList.add("hide-nav");
     } else {
-      navbar.classList.remove("show-nav");
+      navbar.classList.remove("hide-nav");
     }
 
-    lastScrollTop = currentScroll <= 0 ? 0 : currentScroll;
+    lastScrollTop = currentScroll;
   };
 
   window.addEventListener("scroll", handleScroll);
@@ -52,10 +50,7 @@ useEffect(() => {
 
        <Navbar expand="lg" className="main-nav">
          <Container>
-             <img src="logo.png" width={70} height={60} alt="" />
-          
-
-           
+             <img src="logo-removebg-preview.png" width={70} height={60} alt="" />
           
            <Navbar.Collapse>
              <Nav className="ms-auto">

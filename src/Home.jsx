@@ -29,6 +29,7 @@ import {
   useScroll,
   useTransform
 } from "framer-motion";
+import EntrancePage from './EntrancePage';
 
 const Home = () => {
 
@@ -155,6 +156,7 @@ const Home = () => {
   const handlenavigation = (path) => {
     navigate(path);
   };
+  
 
   return (
     <div
@@ -365,6 +367,10 @@ const Home = () => {
         </Container>
       </section>
 
+{/*Entry qr section*/}
+{/* <Container>
+  <EntrancePage/>
+</Container> */}
       {/* ================================================= */}
       {/* CARDS SECTION */}
       {/* ================================================= */}
