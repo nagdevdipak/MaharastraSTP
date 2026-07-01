@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { Navbar, Nav, Container } from "react-bootstrap";
+import { Navbar, Nav, Container, NavLink } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import "./assets/NavbarAnimation.css"
 const Navigation = () => {
@@ -55,8 +55,9 @@ useEffect(() => {
            <Navbar.Collapse>
              <Nav className="ms-auto">
                <Nav.Link as={Link} to="/">Home</Nav.Link>
-               <Nav.Link as={Link} to="/places">Package</Nav.Link>
+               <Nav.Link as={Link} to="/places">Locations</Nav.Link>
          <Nav.Link as={Link} to="/services">Services</Nav.Link>
+         <NavLink as={Link} to="/ticket">Ticket</NavLink>
              </Nav>
            </Navbar.Collapse>
          </Container>

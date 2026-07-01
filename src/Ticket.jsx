@@ -1,13 +1,10 @@
 import React, { useEffect, useRef, useState } from "react";
-import axios from "axios";
-
 import {
   Button,
   Row,
   Col,
   Container
 } from "react-bootstrap";
-
 import { QRCodeCanvas } from "qrcode.react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
@@ -15,40 +12,17 @@ import jsPDF from "jspdf";
 const Ticket = () => {
   const ticketRef = useRef();
 
-  const [data, setData] = useState({});
-
-useEffect(() => {
-  const fetchTicket = async () => {
-    try {
-      const res = await axios.get(
-        "http://localhost:5000/api/visitor/getVisitor"
-      );
-console.log("response",res.data)
-      const visitors = res.data.data;
-
-      const currentVisitorName =
-        localStorage.getItem("visitor");
-
-      // find current visitor
-      const currentVisitor = visitors.find(
-        (item) =>
-          item.full_name === currentVisitorName
-      );
-
-      setData(currentVisitor);
-
-      console.log("Current Visitor", currentVisitor);
-
-    } catch (err) {
-      console.error(err);
+  const [visitor, setVisitor] = useState(null);
+ const [currentplace,setCurrentplace] = useState(JSON.parse(localStorage.getItem("currentLocation")))
+  useEffect(() => {
+    const storedVisitor =  localStorage.getItem("currentVisitor");
+ console.log("current visitor",storedVisitor)
+    if (storedVisitor) {
+      setVisitor(JSON.parse(storedVisitor));
     }
-  };
+  }, []);
 
-  fetchTicket();
-}, []);
-
-  const checkCurrentVisitor = data.visitor?.full_name == localStorage.getItem("visitorName")
-
+const location_Name = currentplace?.name
   const downloadTicket = async () => {
     const canvas = await html2canvas(ticketRef.current);
 
@@ -61,12 +35,20 @@ console.log("response",res.data)
     pdf.save("ticket.pdf");
   };
 
+  if (!visitor) {
+    return (
+      <div className="text-center mt-5">
+        <h4>No Visitor Ticket Found</h4>
+      </div>
+    );
+  }
+
   return (
-    <>
+    <div className="mt-5">
       <Container
         fluid
-        className="justify-content-center mt-5 p-4 shadow"
         ref={ticketRef}
+        className="p-4 mt-5 d-grid place-items-center shadow"
         style={{
           width: "500px",
           borderRadius: "15px",
@@ -75,13 +57,15 @@ console.log("response",res.data)
       >
         <Row>
           <Col md={4} className="text-center">
-            {/* QR Code */}
-        
-  <QRCodeCanvas
-    value={JSON.stringify(data)}
-    size={150}
-  />
-
+            <QRCodeCanvas
+              value={JSON.stringify({
+                id: visitor?._id,
+                name: visitor?.full_name,
+                location: visitor.location?._id,
+                createdAt: visitor?.createdAt
+              })}
+              size={150}
+            />
           </Col>
 
           <Col md={8}>
@@ -90,7 +74,7 @@ console.log("response",res.data)
                 <strong>Visitor Name</strong>
               </Col>
 
-              <Col>{data?.full_name}</Col>
+              <Col>{visitor.full_name}</Col>
             </Row>
 
             <Row className="mb-2">
@@ -98,7 +82,7 @@ console.log("response",res.data)
                 <strong>Location</strong>
               </Col>
 
-              <Col>{data?.location?.name}</Col>
+              <Col>{location_Name}</Col>
             </Row>
 
             <Row className="mb-2">
@@ -106,38 +90,45 @@ console.log("response",res.data)
                 <strong>Group Size</strong>
               </Col>
 
-              <Col>{data?.group_size}</Col>
+              <Col>{visitor.group_size}</Col>
             </Row>
-<Row className="mb-2">
-  <Col>
-    <strong>Date</strong>
-  </Col>
 
-  <Col>
-    {new Date(data?.createdAt).toLocaleDateString()}
-  </Col>
-</Row>
+            <Row className="mb-2">
+              <Col>
+                <strong>Date</strong>
+              </Col>
 
-<Row className="mb-3">
-  <Col>
-    <strong>Time</strong>
-  </Col>
+              <Col>
+                {visitor.createdAt &&
+                  new Date(
+                    visitor.createdAt
+                  ).toLocaleDateString("en-IN")}
+              </Col>
+            </Row>
 
-  <Col>
-    {new Date(data?.createdAt).toLocaleTimeString()}
-  </Col>
-</Row>
+            <Row className="mb-2">
+              <Col>
+                <strong>Time</strong>
+              </Col>
+
+              <Col>
+                {visitor.createdAt &&
+                  new Date(
+                    visitor.createdAt
+                  ).toLocaleTimeString("en-IN")}
+              </Col>
+            </Row>
 
             <Row>
               <Col>
                 <strong>Entry Type</strong>
               </Col>
 
-              <Col>{data?.entry_type}</Col>
+              <Col>{visitor.entry_type}</Col>
             </Row>
 
             <p
-              className="text-center text-muted mt-2"
+              className="text-center text-muted mt-3"
               style={{ fontSize: "12px" }}
             >
               Show this QR at entry
@@ -145,9 +136,11 @@ console.log("response",res.data)
           </Col>
         </Row>
 
-        {/* Download Button */}
-        <div className="text-center mt-3 w-100">
-          <Button onClick={downloadTicket} variant="success">
+        <div className="text-center mt-3">
+          <Button
+            variant="success"
+            onClick={downloadTicket}
+          >
             Download Ticket
           </Button>
         </div>
@@ -155,9 +148,10 @@ console.log("response",res.data)
 
       <div className="text-center mt-3">
         <h4>Thank you for visiting</h4>
-        <p>Your feedback helps us improve</p>
+        <p>Your feedback helps us improve.</p>
       </div>
-    </>
+    </div>
   );
 };
+
 export default Ticket;

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState ,useEffect} from 'react'
 import {
   Container,
   Row,
@@ -6,9 +6,10 @@ import {
   Button,
   Card,
   CardTitle,
-  CardBody
+  CardBody,
+  CardImg,Modal
 } from 'react-bootstrap'
-
+import GenerateQR from './GenerateQR';
 import {
   FaUserPlus,
   FaCompass,
@@ -30,7 +31,17 @@ import {
   useTransform
 } from "framer-motion";
 import EntrancePage from './EntrancePage';
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Autoplay } from "swiper/modules";
+import "swiper/css";
+import "swiper/css/autoplay";
 
+const picturCards = [
+  { id: 1, title: "Hills", img: "anjener-hills.jpg" },
+  { id: 2, title: "Temples", img: "trimbakeshwar.webp" },
+  { id: 3, title: "Dams", img: "KoynaDam.avif" },
+  { id: 4, title: "Forts", img: "Pune_Sinhagad_Fort_Main.jpg" },
+];
 const Home = () => {
 
   const navigate = useNavigate()
@@ -157,12 +168,33 @@ const Home = () => {
     navigate(path);
   };
   
+  const [showQR, setShowQR] = useState(false);
+
+useEffect(() => {
+  const registered = localStorage.getItem("currentVisitor");
+
+  console.log("Home currentVisitor:", registered);
+
+  setShowQR(!registered);
+}, []);
+
+useEffect(() => {
+  console.log(
+    "HOME:",
+    localStorage.getItem("currentVisitor")
+  );
+}, []);
 
   return (
+
+    
     <div
        style={{
     overflowX: "hidden",
-    paddingTop: "86px"
+    paddingTop: "8px",
+     filter: showQR ? "blur(8px)" : "none",
+          pointerEvents: showQR ? "none" : "auto",
+          transition: "0.3s"
   }}
     >
 
@@ -263,107 +295,7 @@ const Home = () => {
             </p>
           </motion.div>
 
-          {/* GLASS CARD */}
-          <motion.div
-            style={{
-              y: glassCardY,
-              backdropFilter: "blur(15px)",
-              background: "rgba(255,255,255,0.1)",
-              borderRadius: "20px",
-              padding: "25px",
-              boxShadow:
-                "0 8px 32px rgba(0,0,0,0.3)"
-            }}
-            initial={{
-              opacity: 0,
-              y: 80
-            }}
-            animate={{
-              opacity: 1,
-              y: 0
-            }}
-            transition={{
-              duration: 1
-            }}
-          >
-            <Row className="align-items-end text-white">
-
-              {/* LEFT */}
-              <Col md={6}>
-                <Row>
-
-                  <Col sm={6}>
-                    <label>Check In</label>
-
-                    <DatePicker
-                      selected={checkIn}
-                      onChange={(date) => setCheckIn(date)}
-                      className="form-control bg-transparent text-white border-0 border-bottom"
-                      placeholderText="Check in"
-                      minDate={new Date()}
-                    />
-                  </Col>
-
-                  <Col sm={6}>
-                    <label>Check Out</label>
-
-                    <DatePicker
-                      selected={checkOut}
-                      onChange={(date) => setCheckOut(date)}
-                      className="form-control bg-transparent text-white border-0 border-bottom"
-                      placeholderText="Check out"
-                      minDate={checkIn || new Date()}
-                    />
-                  </Col>
-
-                </Row>
-
-                <motion.div
-                  whileHover={{
-                    scale: 1.05
-                  }}
-                >
-                  <Button
-                    variant='success'
-                    className="w-100 mt-3 rounded-pill"
-                    size="lg"
-                  >
-                    Search Availability
-                  </Button>
-                </motion.div>
-              </Col>
-
-              {/* RIGHT */}
-              <Col
-                md={6}
-                className="text-center mt-4 mt-md-0"
-              >
-                <div className="d-flex justify-content-center gap-3">
-
-                  {["Child", "Adult", "Senior"].map((item, i) => (
-
-                    <motion.div
-                      key={i}
-                      whileHover={{
-                        scale: 1.1,
-                        y: -5
-                      }}
-                    >
-                      <Button
-                        variant="outline-light"
-                        className="rounded-pill px-4"
-                      >
-                        {item}
-                      </Button>
-                    </motion.div>
-
-                  ))}
-
-                </div>
-              </Col>
-
-            </Row>
-          </motion.div>
+      
         </Container>
       </section>
 
@@ -437,13 +369,45 @@ const Home = () => {
       {/* ABOUT SECTION */}
       {/* ================================================= */}
 
-      <section id='about'>
+      <section id='about' className='mt-5'>
+<Container className='mb-3 mt-3'>
+  <h3>Gallary</h3>
+<Swiper
+  modules={[Autoplay]}
+  slidesPerView={3}
+  spaceBetween={20}
+  loop={true}
+  speed={800}
+  autoplay={{
+    delay: 2000,
+    disableOnInteraction: false,
+  }}
+>
+  {picturCards.map((card) => (
+    <SwiperSlide key={card.id}>
+      <Card className="border-0 shadow-sm rounded-4 overflow-hidden">
+<h2>{card.tittle}</h2>
+       <CardImg
+  src={card.img} alt='img'
+  style={{ height: "180px", objectFit: "cover" }}
+/>
+{/* <img src="anjener-hills.jpg" /> */}
 
-        <Container className="py-5">
+
+        <CardBody>
+          <h5 className="text-center">{card.title}</h5>
+        </CardBody>
+
+      </Card>
+    </SwiperSlide>
+  ))}
+</Swiper>
+</Container>
+        {/* <Container className="py-5">
 
           <Row className="align-items-center">
 
-            {/* LEFT */}
+          
             <Col md={6}>
 
               <motion.div
@@ -481,7 +445,7 @@ const Home = () => {
 
             </Col>
 
-            {/* RIGHT */}
+            
             <Col
               md={6}
               style={{
@@ -500,7 +464,7 @@ const Home = () => {
 
           </Row>
 
-        </Container>
+        </Container> */}
 
       </section>
 
@@ -692,8 +656,29 @@ const Home = () => {
         </Container>
 
       </section>
+<Modal
+        show={showQR}
+        backdrop="static"
+        keyboard={false}
+        centered
+      >
+        <Modal.Header>
+          <Modal.Title>
+            Scan QR to Continue
+          </Modal.Title>
+        </Modal.Header>
 
+        <Modal.Body className="text-center">
+          <GenerateQR />
+
+          <p className="mt-3">
+            Please scan this QR code and complete registration.
+          </p>
+        </Modal.Body>
+      </Modal>
     </div>
+
+    
   )
 }
 

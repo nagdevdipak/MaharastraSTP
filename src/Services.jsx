@@ -1,5 +1,5 @@
 import React, { useState,useEffect } from 'react'
-import { CardBody,Card,Row,Col, CardImg, CardText, CardTitle, Container,Button ,Badge} from 'react-bootstrap'
+import { CardBody,Card,Row,Col, CardImg, CardText, CardTitle, Container,Button ,Badge, FormControl} from 'react-bootstrap'
 import FormCheckInput from 'react-bootstrap/esm/FormCheckInput'
 import { useLocation } from 'react-router-dom'
 import "./index.css"
@@ -13,69 +13,102 @@ const Services = () => {
 
 
       const { state } = useLocation();
-    const cities =["Nashik","Pune","Raigad"]
+
+console.log("Received state:", state);
+console.log("Received city:", state?.city);
+console.log("Received location:", state?.location);
 const selectedCity = state?.city || "Nashik";
-const selectedLocationFromNav = state?.location || "all";
+const selectedLocation = state?.location || "all";
 
 const normalize = (str) => str?.trim().toLowerCase();
 
 const [filter, setFilter] = useState(selectedCity);
-const [location, setLocation] = useState(selectedLocationFromNav);
+const [location, setLocation] = useState(selectedLocation);
 const [activeTab, setActiveTab] = useState("stay");
-const [stayData, setStayData] = useState({});
-const [foodData, setFoodData] = useState({});
+const [services, setServices] = useState({});
 
-const fetchStayservices = async () => {
-  try {
-    const res = await axios.get("http://localhost:5000/api/stay/getGroupedStay");
-    setStayData(res.data.data);
-  } catch (err) {
-    console.error(err);
-  }
-};
 
-const fetchfoodServices = async () => {
+const fetchServices = async () => {
   try {
-    const res = await axios.get("http://localhost:5000/api/foodservice/getGroupFoodByLocation");
-    setFoodData(res.data.data);
+    const res = await axios.get(
+      "http://localhost:5000/api/services/getCombinedServices"
+    );
+
+console.log("data",res.data)
+
+    setServices(res.data.data);
   } catch (err) {
-    console.error(err);
+    console.log(err);
   }
 };
 
 useEffect(() => {
-  fetchStayservices();
-  fetchfoodServices();
+  fetchServices();
 }, []);
 
-const data = activeTab === "stay" ? stayData : foodData;
+const UpdateRatings = async (id, rating) => {
+  try {
+    await axios.put(
+     `http://localhost:5000/api/Service/ratings/${id}`,
+      {ratings:rating},
+    
+    );
 
-const cityData = data?.[filter] || {};
-const locations = Object.keys(cityData);
-// const locations = stay[filter] ? Object.keys(stay[filter]) : []
-const selectedServices =
-  cityData
-    ? location === "all"
-      ? Object.values(cityData).flat()
-      : cityData[location] || Object.values(cityData).flat()
-    : [];
+    fetchServices();
+  } catch (err) {
+    console.log(err.response?.data || err);
+  }
+};
 
-// const selectedFood =
-//   activeTab[filter]
-//     ? location === "all"
-//       ? Object.values(activeTab[filter]).flat()
-//       : activeTab[filter][location] ||
-//         Object.values(activeTab[filter]).flat()
-//     : [];
+const RatingStars = ({ rating, onRate }) => {
+  return (
+    <div style={{ fontSize: "28px", cursor: "pointer" }}>
+      {[1, 2, 3, 4, 5].map((star) => (
+        <span
+          key={star}
+          onClick={() => onRate(star)}
+          style={{
+            color: star <= rating ? "#ffc107" : "#d3d3d3",
+            marginRight: "3px"
+          }}
+        >
+          ★
+        </span>
+      ))}
+    </div>
+  );
+};
+
+const cityKey = Object.keys(services).find(
+    key => key.toLowerCase() === selectedCity?.toLowerCase()
+);
+
+const cityData = services[cityKey] || {};
+
+const locationKey = Object.keys(cityData).find(
+    key => key.toLowerCase() === selectedLocation?.toLowerCase()
+);
+
+const currentLocationData = cityData[locationKey] || {};
+
+const selectedServices = currentLocationData[activeTab] || [];
+
 
   console.log("CITY:", filter);
 console.log("LOCATION:", location);
-console.log("DATA:", data);
-console.log("CITY DATA:", data?.[filter]);
-  const renderStars = (rating) => {
-  const totalStars = parseInt(rating) || 0
-  return "⭐".repeat(totalStars)
-}
+console.log("DATA:", services);
+console.log("CITY DATA:", services?.[filter]);
+
+
+const renderStars = (rating) => {
+  const totalStars = Number(rating);
+
+  if (isNaN(totalStars) || totalStars <= 0) {
+    return "☆☆☆☆☆";
+  }
+
+  return "⭐".repeat(totalStars) + "☆".repeat(5 - totalStars);
+};
   return (
     <div>
       {/* <h2>Services Data Ready ✅</h2> */}
@@ -96,6 +129,7 @@ console.log("CITY DATA:", data?.[filter]);
   
 
 <Container>
+
 
   {/* ✅ STAY SERVICES */}
   {activeTab === "stay" && (
@@ -150,7 +184,7 @@ console.log("CITY DATA:", data?.[filter]);
                 <div className='img-wrapper'>
 
                   <CardImg
-                    src={item.img}
+                    src={`http://localhost:5000/uploads/${item.image}`}
                     className='tour-img'
                   />
 
@@ -168,26 +202,35 @@ console.log("CITY DATA:", data?.[filter]);
                     {/* LEFT */}
                     <div className='text-start'>
 
-                      <CardTitle className='fw-bold fs-5 mb-2'>
-                        {item.name}
-                      </CardTitle>
+                   <CardTitle>{item.name}</CardTitle>
+<p>{item.service_type}</p>
+<CardText>
+  {item.details?.stay_type || item.details?.cuisine_type}
+</CardText>
 
-                      <CardText className='mb-1 text-muted'>
-                        {item.type}
-                      </CardText>
+<CardText>{item.description}</CardText>
 
-                      <CardText className='mb-0 text-muted'>
-                        {item.address}
-                      </CardText>
+<CardText>
+  {activeTab === "stay"
+    ? item.details?.price_per_night
+    : item.details?.price_per_person}
+</CardText>
+
+<RatingStars
+    rating={item.ratings || 0}
+    onRate={(value) => onRate(item._id, value)}
+/>
+<p className="mt-2">
+  {item.ratings} / 5
+</p>
+
 
                     </div>
 
                    {/* RIGHT */}
 <div className='text-end d-flex flex-column align-items-center'>
 
-  <p className='mb-2'>
-    Ratings: {renderStars(item.rating)}
-  </p>
+  
 
   {/* QR CODE */}
 
@@ -236,13 +279,6 @@ console.log("CITY DATA:", data?.[filter]);
     }}
   >
     Download QR
-  </Button>
-
-  <Button
-    variant='success'
-    className='mt-2'
-  >
-    See Details
   </Button>
 
 </div>
@@ -297,7 +333,7 @@ console.log("CITY DATA:", data?.[filter]);
                 <div className='img-wrapper'>
 
                   <CardImg
-                    src={item.img}
+                    src={item.image}
                     className='tour-img'
                   />
 

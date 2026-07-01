@@ -4,6 +4,7 @@ import EntrancePage from "./EntrancePage";
 import Navigation from "./Navigation";
 
 import "./App.css";
+import Ticket from "./Ticket";
 
 const Home = lazy(() => import("./Home"));
 const Places = lazy(() => import("./Places"));
@@ -27,7 +28,7 @@ function App() {
           <Route path="/places" element={<Places />} />
           <Route path="/services" element={<Services />} />
           <Route path="/feedback" element={<FeedbackForm />} />
-
+          <Route path="/ticket" element={<Ticket/>}/>
           <Route path="*" element={<Home />} />
         </Routes>
       </Suspense>
