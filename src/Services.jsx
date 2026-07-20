@@ -1,26 +1,30 @@
 import React, { useState,useEffect } from 'react'
-import { CardBody,Card,Row,Col, CardImg, CardText, CardTitle, Container,Button ,Badge, FormControl} from 'react-bootstrap'
-import FormCheckInput from 'react-bootstrap/esm/FormCheckInput'
+import { CardBody,Card,Row,Col, CardImg, CardText, CardTitle, Container,Button } from 'react-bootstrap'
 import { useLocation } from 'react-router-dom'
 import "./index.css"
 import "./assets/Style.css"
   import { motion } from "framer-motion";
 import { QRCodeCanvas } from 'qrcode.react'
 import axios from 'axios'
-  QRCodeCanvas
-useLocation
+
 const Services = () => {
 
+const { state } = useLocation();
 
-      const { state } = useLocation();
+const currentLocation =
+  state?.currentLocation ||
+  JSON.parse(localStorage.getItem("currentLocation"));
+console.log("Navigation State:", state);
+console.log("Current Location:", state?.currentLocation);
 
-console.log("Received state:", state);
-console.log("Received city:", state?.city);
-console.log("Received location:", state?.location);
-const selectedCity = state?.city || "Nashik";
-const selectedLocation = state?.location || "all";
+console.log(currentLocation);
+console.log("Navigation State:", state);
+console.log("Current Location:", currentLocation);
 
-const normalize = (str) => str?.trim().toLowerCase();
+const selectedCity = currentLocation?.city || "Nashik";
+const selectedLocation = currentLocation?.name || "all";
+
+
 
 const [filter, setFilter] = useState(selectedCity);
 const [location, setLocation] = useState(selectedLocation);
@@ -34,6 +38,7 @@ const fetchServices = async () => {
       "http://localhost:5000/api/services/getCombinedServices"
     );
 
+
 console.log("data",res.data)
 
     setServices(res.data.data);
@@ -41,7 +46,7 @@ console.log("data",res.data)
     console.log(err);
   }
 };
-
+console.log("Services:", services);
 useEffect(() => {
   fetchServices();
 }, []);
@@ -98,6 +103,7 @@ const selectedServices = currentLocationData[activeTab] || [];
 console.log("LOCATION:", location);
 console.log("DATA:", services);
 console.log("CITY DATA:", services?.[filter]);
+
 
 
 const renderStars = (rating) => {
@@ -218,7 +224,7 @@ const renderStars = (rating) => {
 
 <RatingStars
     rating={item.ratings || 0}
-    onRate={(value) => onRate(item._id, value)}
+    onRate={(value) => UpdateRatings(item._id, value)}
 />
 <p className="mt-2">
   {item.ratings} / 5
@@ -232,7 +238,7 @@ const renderStars = (rating) => {
 
   
 
-  {/* QR CODE */}
+  {/* stay QR CODE */}
 
   <QRCodeCanvas
     id={`stay-qr-${index}`}
@@ -332,10 +338,9 @@ const renderStars = (rating) => {
 
                 <div className='img-wrapper'>
 
-                  <CardImg
-                    src={item.image}
-                    className='tour-img'
-                  />
+                <CardImg
+    src={`http://localhost:5000/uploads/${item.image}`}
+/>
 
                 </div>
 
@@ -373,21 +378,31 @@ const renderStars = (rating) => {
     Ratings: {renderStars(item.rating)}
   </p>
 
-  {/* QR CODE */}
+  {/*food QR CODE */}
 
-  <QRCodeCanvas
-    id={`food-qr-${index}`}
-    value={JSON.stringify({
-      serviceName: item.name,
-      type: item.type,
-     address:`https://www.google.com/maps/search/?api=1&query=${item.address}`,
-      city: filter,
-      location: location
-    })}
-    size={110}
-    includeMargin={true}
-  />
-
+<QRCodeCanvas
+  id={`stay-qr-${index}`}
+  value={JSON.stringify({
+    id: item._id,
+    name: item.name,
+    serviceType: item.service_type,
+    stayType: item.details?.stay_type,
+    cuisineType: item.details?.cuisine_type,
+    description: item.description,
+    price:
+      activeTab === "stay"
+        ? item.details?.price_per_night
+        : item.details?.price_per_person,
+    rating: item.ratings,
+    image: item.image,
+    address: item.address,
+    googleMap:
+      `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.address)}`
+  })}
+  value={`http://localhost:3000/service/${item._id}`}
+  size={120}
+  includeMargin
+/>
   <small className='text-muted mt-2'>
     Scan Service Info
   </small>

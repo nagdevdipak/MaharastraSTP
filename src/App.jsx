@@ -13,7 +13,7 @@ const VisitorResistrationForm = lazy(() =>
   import("./VisitorResistrationForm")
 );
 const FeedbackForm = lazy(() => import("./FeedbackForm"));
-
+const ServiceDetails = lazy(()=>import("./ServiceDetails"))
 function App() {
   return (
     <BrowserRouter>
@@ -22,6 +22,7 @@ function App() {
       <Suspense fallback={<h3>AA raha hu mai...</h3>}>
         <Routes>
           <Route path="/" element={<Home />} />
+<Route path="/service/:id" element={<ServiceDetails />} />
 
           <Route path="/entrance" element={<EntrancePage />} />
           <Route path="/registration" element={<VisitorResistrationForm />} />

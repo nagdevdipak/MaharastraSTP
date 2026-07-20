@@ -1,4 +1,4 @@
-import React, { useState ,useEffect} from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   Container,
   Row,
@@ -7,7 +7,7 @@ import {
   Card,
   CardTitle,
   CardBody,
-  CardImg,Modal
+  CardImg, Modal
 } from 'react-bootstrap'
 import GenerateQR from './GenerateQR';
 import {
@@ -35,6 +35,7 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/autoplay";
+import axios from 'axios';
 
 const picturCards = [
   { id: 1, title: "Hills", img: "anjener-hills.jpg" },
@@ -45,17 +46,18 @@ const picturCards = [
 const Home = () => {
 
   const navigate = useNavigate()
-
-  const [checkIn, setCheckIn] = useState(null);
-  const [checkOut, setCheckOut] = useState(null);
-
-  /*
-    ===============================
-    PARALLAX CONTROLS
-    ===============================
-  */
-
   const { scrollY } = useScroll();
+
+const [currentLocation,setCurrentLocation] = useState(null)
+
+useEffect(() => {
+  const saved = localStorage.getItem("currentLocation");
+
+  if (saved) {
+    setCurrentLocation(JSON.parse(saved));
+    return;
+  }
+}, []);
 
   // background movement
   const heroBgY = useTransform(
@@ -159,43 +161,74 @@ const Home = () => {
       "Lonavala"
     ],
 
-    Dams:[
-      "Koyna Dam","Bhandardara Dam","Jayakwadi dam"
+    Dams: [
+      "Koyna Dam", "Bhandardara Dam", "Jayakwadi dam"
     ]
   };
 
-  const handlenavigation = (path) => {
-    navigate(path);
-  };
-  
+
+const handlenavigation = (path) => {
+  if (path === "/services") {
+    if (!currentLocation) {
+      alert("Current location not found.");
+      return;
+    }
+
+    navigate("/services", {
+      state: {
+        currentLocation:currentLocation,
+      },
+    });
+
+    return;
+  }
+
+  if (path === "/places") {
+    navigate("/places",{
+      state: {
+        currentLocation:currentLocation,
+      },
+    });
+    return;
+  }
+
+  navigate(path);
+};
+
+
+
   const [showQR, setShowQR] = useState(false);
 
-useEffect(() => {
-  const registered = localStorage.getItem("currentVisitor");
+  const API = import.meta.env.VITE_API_URL;
 
-  console.log("Home currentVisitor:", registered);
+  // console.log(showQR)
+  useEffect(() => {
+    const registered = localStorage.getItem("currentVisitor");
 
-  setShowQR(!registered);
-}, []);
+    console.log("Home currentVisitor:", registered);
+    setShowQR(!registered);
+  }, []);
 
-useEffect(() => {
-  console.log(
-    "HOME:",
-    localStorage.getItem("currentVisitor")
-  );
-}, []);
+
+
+  useEffect(() => {
+    console.log(
+      "HOME:",
+      localStorage.getItem("currentVisitor")
+    );
+  }, []);
 
   return (
 
-    
+
     <div
-       style={{
-    overflowX: "hidden",
-    paddingTop: "8px",
-     filter: showQR ? "blur(8px)" : "none",
-          pointerEvents: showQR ? "none" : "auto",
-          transition: "0.3s"
-  }}
+      style={{
+        overflowX: "hidden",
+        paddingTop: "8px",
+        filter: showQR ? "blur(8px)" : "none",
+        pointerEvents: showQR ? "none" : "auto",
+        transition: "0.3s"
+      }}
     >
 
       {/* ================================================= */}
@@ -295,17 +328,11 @@ useEffect(() => {
             </p>
           </motion.div>
 
-      
+
         </Container>
       </section>
 
-{/*Entry qr section*/}
-{/* <Container>
-  <EntrancePage/>
-</Container> */}
-      {/* ================================================= */}
-      {/* CARDS SECTION */}
-      {/* ================================================= */}
+
 
       <Container className="mt-5">
 
@@ -370,101 +397,40 @@ useEffect(() => {
       {/* ================================================= */}
 
       <section id='about' className='mt-5'>
-<Container className='mb-3 mt-3'>
-  <h3>Gallary</h3>
-<Swiper
-  modules={[Autoplay]}
-  slidesPerView={3}
-  spaceBetween={20}
-  loop={true}
-  speed={800}
-  autoplay={{
-    delay: 2000,
-    disableOnInteraction: false,
-  }}
->
-  {picturCards.map((card) => (
-    <SwiperSlide key={card.id}>
-      <Card className="border-0 shadow-sm rounded-4 overflow-hidden">
-<h2>{card.tittle}</h2>
-       <CardImg
-  src={card.img} alt='img'
-  style={{ height: "180px", objectFit: "cover" }}
-/>
-{/* <img src="anjener-hills.jpg" /> */}
+        <Container className='mb-3 mt-3'>
+          <h3>Gallary</h3>
+          <Swiper
+            modules={[Autoplay]}
+            slidesPerView={3}
+            spaceBetween={20}
+            loop={true}
+            speed={800}
+            autoplay={{
+              delay: 2000,
+              disableOnInteraction: false,
+            }}
+          >
+            {picturCards.map((card) => (
+              <SwiperSlide key={card.id}>
+                <Card className="border-0 shadow-sm rounded-4 overflow-hidden">
+                  <h2>{card.tittle}</h2>
+                  <CardImg
+                    src={card.img} alt='img'
+                    style={{ height: "180px", objectFit: "cover" }}
+                  />
+                  {/* <img src="anjener-hills.jpg" /> */}
 
 
-        <CardBody>
-          <h5 className="text-center">{card.title}</h5>
-        </CardBody>
+                  <CardBody>
+                    <h5 className="text-center">{card.title}</h5>
+                  </CardBody>
 
-      </Card>
-    </SwiperSlide>
-  ))}
-</Swiper>
-</Container>
-        {/* <Container className="py-5">
+                </Card>
+              </SwiperSlide>
+            ))}
+          </Swiper>
+        </Container>
 
-          <Row className="align-items-center">
-
-          
-            <Col md={6}>
-
-              <motion.div
-                initial={{
-                  opacity: 0,
-                  x: -100
-                }}
-                whileInView={{
-                  opacity: 1,
-                  x: 0
-                }}
-                transition={{
-                  duration: 0.8
-                }}
-              >
-
-                <h2 className="fw-bold mb-4">
-                  Who We Are
-                </h2>
-
-                <p>
-                  Maharashtra Travel is a modern tourism
-                  platform established in 2025 with a mission
-                  to promote local tourism and empower
-                  small businesses across Maharashtra.
-                </p>
-
-                <p>
-                  We connect travelers with local vendors
-                  including hotels, guides, transport
-                  services and food providers.
-                </p>
-
-              </motion.div>
-
-            </Col>
-
-            
-            <Col
-              md={6}
-              style={{
-                overflow: "hidden",
-                borderRadius: "20px"
-              }}
-            >
-
-              <motion.img
-                src='/Maharashtra-Monsoon.avif'
-                className="img-fluid rounded shadow-lg"
-                
-              />
-
-            </Col>
-
-          </Row>
-
-        </Container> */}
 
       </section>
 
@@ -593,7 +559,7 @@ useEffect(() => {
                   📅 Established: 2025
                 </p>
 
-                <p style={{wordBreak:"break-word"}}>
+                <p style={{ wordBreak: "break-word" }}>
                   📧 support@maharashtratourism.com
                 </p>
 
@@ -657,28 +623,30 @@ useEffect(() => {
 
       </section>
 <Modal
-        show={showQR}
-        backdrop="static"
-        keyboard={false}
-        centered
-      >
-        <Modal.Header>
-          <Modal.Title>
-            Scan QR to Continue
-          </Modal.Title>
-        </Modal.Header>
+  show={showQR}
+  backdrop="static"
+  keyboard={false}
+  centered
+  size="lg"
+>
+  <Modal.Header closeButton={false}>
+    <Modal.Title>Scan QR to Continue</Modal.Title>
+  </Modal.Header>
 
-        <Modal.Body className="text-center">
-          <GenerateQR />
-
-          <p className="mt-3">
-            Please scan this QR code and complete registration.
-          </p>
-        </Modal.Body>
-      </Modal>
+  <Modal.Body className="text-center p-4">
+    <div className="w-100">
+      <GenerateQR location={currentLocation} />
     </div>
 
-    
+    <p className="mt-3">
+      Scan this QR code to complete your registration.
+    </p>
+  </Modal.Body>
+</Modal>
+{/* <GenerateQR onLocationFound={setCurrentLocation} /> */}
+    </div>
+
+
   )
 }
 

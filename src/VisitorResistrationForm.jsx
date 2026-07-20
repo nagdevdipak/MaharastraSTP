@@ -1,18 +1,18 @@
 import axios from "axios";
-import { nav } from "framer-motion/m";
+
 import React, { useState, useEffect } from "react";
 import {
   Form,
   Row,
   Col,
   Button,
-  Container,
-  Card
+  Container,Card
 } from "react-bootstrap";
-import { data, useNavigate } from "react-router-dom"
+import {  useNavigate } from "react-router-dom"
 import './index.css'
 import './assets/Style.css'
 import { useLocation } from "react-router-dom";
+import GenerateQR from "./GenerateQR";
 
 const VisitorRegistrationForm = () => {
   const location = useLocation();
@@ -20,7 +20,11 @@ const VisitorRegistrationForm = () => {
   const params = new URLSearchParams(location.search);
   const qrLocationId = params.get("locationId");
 
+const qrLat = Number(params.get("lat"));
+const qrLng = Number(params.get("lng"));
+const qrName = params.get("name");
   const navigate = useNavigate();
+
   const [locations, setLocations] = useState([]);
   const [otp, setOtp] = useState("");
   const [isVerified, setIsVerified] = useState(false);
@@ -50,7 +54,9 @@ const VisitorRegistrationForm = () => {
   });
 
 
-
+// const API = import.meta.env.VITE_API_URL;
+ const API = "https://tourismdbexpress.onrender.com";
+//  const API = "http://localhost:5000"
   // ✅ Handle Input
   const handleChange = (e) => {
 
@@ -74,13 +80,19 @@ const VisitorRegistrationForm = () => {
   };
 
   // ✅ Send OTP
-  const sendOTP = async () => {
-    await axios.post(
-      "http://localhost:5000/api/visitor/sendOTP",
+ const sendOTP = async () => {
+  try {
+    const res = await axios.post(
+      `${API}/api/visitor/sendOTP`,
       { email: formData.email }
     );
-    alert("OTP Sent");
-  };
+
+    alert(res.data.message);
+  } catch (err) {
+    console.error("SEND OTP ERROR:", err.response?.data || err);
+    alert(err.response?.data?.message || "Failed to send OTP");
+  }
+};
   // console.log("Sending OTP:", otp);
   // ✅ Verify OTP
   const verifyOTP = async () => {
@@ -91,7 +103,7 @@ const VisitorRegistrationForm = () => {
       });
 
       const res = await axios.post(
-        "http://localhost:5000/api/visitor/verifyOtp",
+        `${API}/api/visitor/verifyOtp`,
         {
           email: formData.email,
           otp: otp   // ✅ THIS WAS MISSING
@@ -110,36 +122,58 @@ const VisitorRegistrationForm = () => {
     }
   };
 
-  useEffect(() => {
-    if (!qrLocationId || locations.length === 0) return;
+ useEffect(() => {
+  if (!qrLocationId || locations.length === 0) return;
 
-    const matched = locations.find(l => l._id === qrLocationId);
+  const matched = locations.find(
+    l => l._id === qrLocationId,
+  );
 
-    if (matched) {
-      setFormData(prev => ({
-        ...prev,
-        location: matched._id,
-        location_Name :matched.name,
-        latitude: matched.latitude,
-        longitude: matched.longitude
-      }));
-    }
-  }, [qrLocationId, locations]);
+  if (!matched) return;
+console.log("matched loc",matched)
+  setFormData(prev => ({
+    ...prev,
+    location: matched._id,
+    locationName: matched.name,
+    latitude: matched.latitude,
+    longitude: matched.longitude
+  }));
 
-  const getUserLocation = () =>
-    new Promise((resolve, reject) => {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          resolve({
-            lat: pos.coords.latitude,
-            lng: pos.coords.longitude
-          });
-        },
-        (err) => reject(err)
-      );
-    });
+  setUserLocation(prev => ({
+    ...prev,
+    locationName: matched.name,
+    locationId: matched._id
+  }));
+
+}, [qrLocationId, locations]);
+
+
+const getUserLocation = () =>
+  new Promise((resolve, reject) => {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        console.log("Latitude:", pos.coords.latitude);
+        console.log("Longitude:", pos.coords.longitude);
+        console.log("Accuracy:", pos.coords.accuracy, "meters");
+
+        resolve({
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+          accuracy: pos.coords.accuracy
+        });
+      },
+      (err) => reject(err),
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      }
+    );
+  });
 
   const getDistance = (lat1, lon1, lat2, lon2) => {
+
+    
     const R = 6371;
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLon = (lon2 - lon1) * Math.PI / 180;
@@ -159,11 +193,37 @@ const VisitorRegistrationForm = () => {
     e.preventDefault();
 
     try {
+    
       // 1. Get user GPS
       const pos = await getUserLocation();
 
       const userLat = pos.lat;
       const userLng = pos.lng;
+console.log("4data",formData);
+  console.log("User GPS");
+console.log("Latitude:", userLat);
+console.log("Longitude:", userLng);
+
+console.log("Target GPS");
+console.log("Latitude:", formData.latitude);
+console.log("Longitude:", formData.longitude);
+
+console.log("User GPS:", {
+  lat: userLat,
+  lng: userLng
+});
+
+console.log("QR Location:", {
+  lat: formData.latitude,
+  lng: formData.longitude
+});
+
+console.log("QR Params:", {
+  qrLat,
+  qrLng,
+  qrName,
+  qrLocationId
+});
 
       // 2. Compare with selected location
       const distance = getDistance(
@@ -176,14 +236,20 @@ const VisitorRegistrationForm = () => {
       console.log("Distance:", distance);
 
       // 3. Set radius (example 0.5 km)
-      if (distance > 0.5) {
-        alert("❌ You are not at the correct location");
-        return;
-      }
+   if (distance > 0.5) {
+    alert(
+      `You are ${(distance * 1000).toFixed(0)} meters away from this location. You must be within 500 meters.`
+    );
+    return;
+}
+
+      console.log("FORM DATA BEFORE REGISTER");
+
+
 
       // 4. If OK → register
       const res = await axios.post(
-        "http://localhost:5000/api/visitor/register",
+        `${API}/api/visitor/register`,
         formData
       );
     const visitor = res.data.data;
@@ -198,12 +264,13 @@ localStorage.setItem(
     full_name: visitor.full_name,
     email: visitor.email,
     mobile: visitor.mobile,
-    location:visitor.location._id,
+    location:visitor.location,
     group_size: visitor.group_size,
     entry_type: visitor.entry_type,
     createdAt: visitor.createdAt,
   })
 );
+
 
 
 console.log(
@@ -218,67 +285,59 @@ navigate("/")
     }
   };
 
-  useEffect(() => {
-    axios.get("http://localhost:5000/api/locations/findAll")
-      .then(res => {
-        console.log("LOCATIONS API:", res.data);
-  
-        // ✅ IMPORTANT FIX
-        setLocations(res.data.data);
-      })
-      .catch(err => console.error(err));
-  }, []);
- const cl =  locations.find(l => l._id === formData.location)?.name || ""
-  console.log("current",cl)
+useEffect(() => {
 
-  
-  const fetchCurrentLocation = () => {
-    navigator.geolocation.getCurrentPosition((position) => {
-      const lat = position.coords.latitude;
-      const lng = position.coords.longitude;
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+    setUserLocation(prev => ({
+  ...prev,
+  latitude: position.coords.latitude,
+  longitude: position.coords.longitude
+}));
 
-      let nearestLocation = null;
-      let minDistance = Infinity;
-
-      locations.forEach((loc) => {
-        const distance = getDistance(
-          lat,
-          lng,
-          Number(loc.latitude),
-          Number(loc.longitude)
-        );
-
-        if (distance < minDistance) {
-          minDistance = distance;
-          nearestLocation = loc;
-        }
-      });
-
-      if (nearestLocation) {
-        setUserLocation({
-          latitude: lat,
-          longitude: lng,
-          locationName: nearestLocation.name,
-          locationId: nearestLocation._id
-        });
-
-        // Save the location id in formData
-        setFormData((prev) => ({
-          ...prev,
-          location: nearestLocation._id,
-          latitude: nearestLocation.latitude,
-          longitude: nearestLocation.longitude
-        }));
-      }
-    });
-  };
-
-  useEffect(() => {
-    if (locations.length > 0) {
-      fetchCurrentLocation();
-      
+    },
+    (err) => console.log(err),
+    {
+      enableHighAccuracy: true
     }
-  }, [locations]);
+  );
+
+}, []);
+
+  useEffect(() => {
+
+    axios.get(`${API}/api/locations/findAll`)
+  .then((res) => {
+    console.log(res.data);
+
+    console.log(location.search);
+console.log(qrLocationId);
+console.log(qrName);
+console.log(qrLat);
+console.log(qrLng);
+    setLocations(res.data.data);
+  })
+     .catch(err => console.error(err));
+  }, []);
+
+
+
+ useEffect(() => {
+  if (!formData.location || locations.length === 0) return;
+
+  const currentLocation = locations.find(
+    loc => loc._id === formData.location
+  );
+
+  if (currentLocation) {
+    localStorage.setItem(
+      "currentLocation",
+      JSON.stringify(currentLocation)
+    );
+
+    console.log("Stored Current Location:", currentLocation);
+  }
+}, [formData.location, locations]);
 
    console.log(
   "Stored visitor:",
@@ -288,23 +347,7 @@ navigate("/")
     console.log("formData.location:", formData.location);
 console.log("locations:", locations);
 
-const currentLocation = locations.find(
-  (loc) => loc._id === formData.location
-);
 
-
-
-if (currentLocation) {
-  localStorage.setItem(
-    "currentLocation",
-    JSON.stringify(currentLocation)
-  );
-
-  console.log(
-    "Stored Current Location:",
-    JSON.parse(localStorage.getItem("currentLocation"))
-  );
-}
 
   return (
     <Container
@@ -513,34 +556,12 @@ if (currentLocation) {
             </Col>
           </Row>
 
-          {/* LOCATION */}
-          {/* <Form.Select
-          name="location"
-          value={formData.location}
-          onChange={handleChange}
-          className="rounded-3 py-2 mb-4"
-        >
-          <option value="">
-            Select Location
-          </option>
+  
 
-          {Array.isArray(locations) &&
-            locations.map((loc) => (
-              <option
-                key={loc._id}
-                value={loc._id}
-              >
-                {loc.name}
-              </option>
-            ))}
-        </Form.Select> */}
-
-          <Form.Control
-            value={
-              locations.find(l => l._id === formData.location)?.name || ""
-            }
-            readOnly
-          />
+         <Form.Control
+  value={qrName || ""}
+  readOnly
+/>
 
           {/* EMAIL + OTP */}
           <h5 className="fw-semibold mt-3 mb-3 text-success">
@@ -617,7 +638,7 @@ if (currentLocation) {
 
             <p className="mb-0">
               <strong>Current Location Name:</strong>{" "}
-              {userLocation.locationName || "Finding..."}
+              {userLocation?.locationName || "Finding..."}
             </p>
           </Card>
           {/* BUTTONS */}
@@ -642,8 +663,11 @@ if (currentLocation) {
 
         </Form>
       </Card>
+    
     </Container>
   );
+    
+
 };
 
 export default VisitorRegistrationForm;

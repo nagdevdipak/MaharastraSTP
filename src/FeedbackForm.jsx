@@ -4,149 +4,244 @@ import React, { useEffect, useState } from 'react'
 import { Button, Container, FormControl, FormLabel } from 'react-bootstrap'
 import { useParams } from 'react-router-dom'
 const FeedbackForm = () => {
-    const {locationId} = useParams();
+  const { locationId } = useParams();
+const [overallRating, setOverallRating] = useState(0);
 
-    const [currentVisitor, setCurrentVisitor] = useState(null);
+const [serviceRatings, setServiceRatings] = useState([]);
+
+const [facilities, setFacilities] = useState({
+  cleanliness: 0,
+  parking: 0,
+  washroom: 0,
+  safety: 0,
+  accessibility: 0,
+});
+
+const [comment, setComment] = useState("");
+const [currentVisitor,setCurrentVisitor] = useState(null)
+const [currentLocation, setCurrentLocation] = useState(null);
 
 useEffect(() => {
-  const visitor = localStorage.getItem("currentVisitor");
+  const visitor = JSON.parse(localStorage.getItem("currentVisitor"));
+  const location = JSON.parse(localStorage.getItem("currentLocation"));
 
-  if (visitor) {
-    setCurrentVisitor(JSON.parse(visitor));
-  } else {
-    console.log("No current visitor found");
-  }
+  if (visitor) setCurrentVisitor(visitor);
+  if (location) setCurrentLocation(location);
 }, []);
 
-  
-const handleSubmit = async (e) => {
-  e.preventDefault();
 
-  if (!currentVisitor) {
-    alert("Visitor information not found.");
-    return;
-  }
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+if (!currentVisitor || !currentLocation) {
+  alert("Visitor or Location not found.");
+  return;
+}
 
-  try {
-    const payload = {
-      user: localStorage.getItem("visitorId"),
-      location: currentVisitor.location,
-      rating: ratings[0].rating,
-      food_rating: ratings[1].rating,
-      cleanliness_rating: ratings[2].rating,
-      facilities_rating: ratings[3].rating,
-      experience_rating: ratings[4].rating,
-      comments: comment,
-    };
+    try {
+     const payload = {
 
-    console.log(payload);
+    visitorId: currentVisitor._id,
 
-    await axios.post(
-      "http://localhost:5000/api/feedback/createfeedback",
-      payload
-    );
+    overall_rating: overallRating,
+serviceFeedback: serviceRatings
+  .filter(service => service.rating > 0)
+  .map(service => ({
+    serviceId: service.serviceId,
+    service_type: service.service_type,
+    rating: service.rating,
+    comments: service.comments,
+  })),
 
-    alert(
-      `Mr ${currentVisitor.full_name}, your feedback is submitted ✅`
-    );
+    facilities,
 
-    setRatings(initialRatings);
-    setComment("");
+    overallComment: comment
 
-    // Remove visitor only after successful submission
-    localStorage.removeItem("currentVisitor");
-    localStorage.removeItem("visitor");
-    localStorage.removeItem("visitorId");
-    localStorage.removeItem("location");
-
-  } catch (err) {
-    console.error(err);
-    alert(err.response?.data?.message || "Something went wrong");
-  }
 };
 
-  console.log(JSON.parse(localStorage.getItem("currentVisitor")));
+      console.log("Payload:", payload);
 
-const user = localStorage.getItem("visitor")
-    const initialRatings = [
-        { title: "overall Ratings", rating: 0 },
-        { title: "food Quality", rating: 0 },
-        { title: "cleanliness", rating: 0 },
-        { title: "Facilities", rating: 0 },
-        { title: "overall experience", rating: 0 }
-    ]
+      await axios.post(
+        "http://localhost:5000/api/feedback/createfeedback",
+        payload
+      );
 
-    const [ratings, setRatings] = useState(initialRatings)
-    const [comment, setComment] = useState("")
+      alert(
+        `Mr ${currentVisitor.full_name}, your feedback has been submitted ✅`
+      );
 
- 
-    // handle star click
-    const handleRating = (index, value) => {
-        const updated = [...ratings]
-        updated[index].rating = value
-        setRatings(updated)
+    setOverallRating(0);
+
+setServiceRatings([]);
+
+setFacilities({
+  cleanliness: 0,
+  parking: 0,
+  washroom: 0,
+  safety: 0,
+  accessibility: 0,
+});
+
+setComment("");
+
+      localStorage.removeItem("currentVisitor");
+      localStorage.removeItem("currentLocation");
+      localStorage.removeItem("visitor");
+      localStorage.removeItem("visitorId");
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.message || "Something went wrong");
     }
+  };
 
-    // render clickable stars
-    const renderStars = (index, currentRating) => {
-        return [1,2,3,4,5].map((star) => (
-            <span
-                key={star}
-                style={{ cursor: "pointer", fontSize: "17px" }}
-                onClick={() => handleRating(index, star)}
-            >
-                {star <= currentRating ? "⭐" : "☆"}
-            </span>
-        ))
+useEffect(() => {
+  if (!currentLocation) return;
+
+  const fetchServices = async () => {
+    try {
+      const res = await axios.get(
+        `http://localhost:5000/api/services/location/${currentLocation._id}`
+      );
+
+      const data = res.data.data.map((service) => ({
+        serviceId: service._id,
+        name: service.name,
+        service_type: service.service_type,
+        rating: 0,
+        comments: "",
+      }));
+
+      setServiceRatings(data);
+    } catch (err) {
+      console.log(err);
     }
+  };
+
+  fetchServices();
+}, [currentLocation]);
+
+const handleServiceRating = (index, rating) => {
+  const updated = [...serviceRatings];
+  updated[index].rating = rating;
+  setServiceRatings(updated);
+};
+
+const handleFacilityRating = (field, rating) => {
+  setFacilities(prev => ({
+    ...prev,
+    [field]: rating
+  }));
+};
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      localStorage.removeItem("currentVisitor");
+      localStorage.removeItem("currentLocation");
+    }, 30 * 60 * 1000);
+
+    return () => clearTimeout(timer);
+  }, []);
 
 
-    return (
-        <>
-  <Container className='mt-5'>
- <form onSubmit={handleSubmit}>
-           
-            <h2 className="text-center mb-4">Feedback Form</h2>
- <div className="mb-3">
-  <strong>Visitor:</strong>{" "}
-  <small>{currentVisitor?.full_name || "Guest"}</small>
+  // render clickable stars
+const renderStars = (currentRating, onRate) => {
+  return [1, 2, 3, 4, 5].map((star) => (
+    <span
+      key={star}
+      style={{
+        cursor: "pointer",
+        fontSize: "22px"
+      }}
+      onClick={() => onRate(star)}
+    >
+      {star <= currentRating ? "⭐" : "☆"}
+    </span>
+  ));
+};
+
+
+  return (
+    <>
+      <Container className='mt-5'>
+        <form onSubmit={handleSubmit}>
+
+          <h2 className="text-center mb-4">Feedback Form</h2>
+          <div className="mb-3">
+            <strong>Visitor:</strong>{" "}
+            <small>{currentVisitor?.full_name || "Guest"}</small>
+          </div>
+
+          <div className="mb-4">
+    <h5>Overall Rating</h5>
+
+  {renderStars(overallRating, setOverallRating)}
 </div>
-            {
-                ratings.map((rat, index) => (
+
+       <h4>Service Ratings</h4>
+
+{
+    serviceRatings.map((service,index)=>(
+        <div key={service.serviceId}
+            className="border rounded p-3 mb-3">
+
+            <h6>
+                {service.name}
+                ({service.service_type})
+            </h6>
+
+            {renderStars(
                 
-                    <div 
-                        className="ratings border rounded px-4 py-3 w-75 mb-3 mx-auto text-start" 
-                        key={index}
-                    >
-                        <p className="mb-1 fw-bold">{rat.title}</p>
+                service.rating,
+                (value)=>handleServiceRating(index,value)
+            )}
 
-                        <div>
-                            {renderStars(index, rat.rating)}
-                        </div>
-                    </div>
-                ))
-            }
+            <FormControl
+                className="mt-2"
+                placeholder="Comments"
+                value={service.comments}
+                onChange={(e)=>{
 
-            <div className="d-flex flex-column align-items-center">
-                <FormLabel>
-                    Comments <small>(optional)</small>
-                </FormLabel>
+                    const updated=[...serviceRatings];
 
-                <FormControl 
-                    as="textarea" 
-                    rows={4} 
-                    value={comment}
-                    onChange={(e) => setComment(e.target.value)}
-                    className="w-75 mb-3"
-                />
+                    updated[index].comments=e.target.value;
 
-                <Button type="submit" disabled={ratings[0].rating === 0}>Submit feedback</Button>
-            </div>
+                    setServiceRatings(updated);
+
+                }}
+            />
+        </div>
+    ))
+}
+
+<h4>Facilities</h4>
+
+{
+[
+"cleanliness",
+"parking",
+"washroom",
+"safety",
+"accessibility"
+].map(item=>(
+
+<div key={item} className="mb-3">
+
+<h6>{item}</h6>
+
+{renderStars(
+facilities[item],
+(value)=>handleFacilityRating(item,value)
+)}
+
+</div>
+
+))
+}
+<Button variant='success' type='submit'> submit</Button>
         </form>
-  </Container>
-       
-              </>
-    )
+      </Container>
+
+    </>
+  )
 }
 
 export default FeedbackForm
