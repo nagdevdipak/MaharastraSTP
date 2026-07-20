@@ -55,8 +55,8 @@ const qrName = params.get("name");
 
 
 // const API = import.meta.env.VITE_API_URL;
- const API = "https://tourismdbexpress.onrender.com";
-//  const API = "http://localhost:5000"
+//  const API = "https://tourismdbexpress.onrender.com";
+  const API = "http://localhost:5000"
   // ✅ Handle Input
   const handleChange = (e) => {
 
