@@ -1,13 +1,30 @@
 import axios from 'axios';
 import { div } from 'framer-motion/client';
 import React, { useEffect, useState } from 'react'
-import { Button, Container, FormControl, FormLabel } from 'react-bootstrap'
+import { Button, Container, FormControl, FormLabel ,Badge,Card,} from 'react-bootstrap'
 import { useParams } from 'react-router-dom'
+import { useLocation } from "react-router-dom";
+import { motion } from "framer-motion";
+import "./assets/Stylesheet.css"
 const FeedbackForm = () => {
+
+  const { state } = useLocation();
+
+const selectedServices = state?.usedServices || [];
+const selectedLocation = state?.location;
+console.log("Navigation State:", state);
   const { locationId } = useParams();
 const [overallRating, setOverallRating] = useState(0);
 
-const [serviceRatings, setServiceRatings] = useState([]);
+const [serviceRatings, setServiceRatings] = useState(() =>
+  selectedServices.map(service => ({
+    serviceId: service._id,
+    name: service.name,
+    service_type: service.service_type,
+    rating: 0,
+    comments: ""
+  }))
+);
 
 const [facilities, setFacilities] = useState({
   cleanliness: 0,
@@ -21,13 +38,24 @@ const [comment, setComment] = useState("");
 const [currentVisitor,setCurrentVisitor] = useState(null)
 const [currentLocation, setCurrentLocation] = useState(null);
 
+
+const API = "http://localhost:5000"
 useEffect(() => {
   const visitor = JSON.parse(localStorage.getItem("currentVisitor"));
-  const location = JSON.parse(localStorage.getItem("currentLocation"));
 
-  if (visitor) setCurrentVisitor(visitor);
-  if (location) setCurrentLocation(location);
-}, []);
+  if (visitor) {
+    setCurrentVisitor(visitor);
+  }
+
+  if (selectedLocation) {
+    setCurrentLocation(selectedLocation);
+  } else {
+    const location = JSON.parse(localStorage.getItem("currentLocation"));
+    if (location) {
+      setCurrentLocation(location);
+    }
+  }
+}, [selectedLocation]);
 
 
   const handleSubmit = async (e) => {
@@ -38,30 +66,31 @@ if (!currentVisitor || !currentLocation) {
 }
 
     try {
-     const payload = {
-
+const payload = {
     visitorId: currentVisitor._id,
 
+    location: currentLocation._id,
+
     overall_rating: overallRating,
-serviceFeedback: serviceRatings
-  .filter(service => service.rating > 0)
-  .map(service => ({
-    serviceId: service.serviceId,
-    service_type: service.service_type,
-    rating: service.rating,
-    comments: service.comments,
-  })),
+
+    serviceFeedback: serviceRatings
+      .filter(service => service.rating > 0)
+      .map(service => ({
+          serviceId: service.serviceId,
+          service_type: service.service_type,
+          rating: service.rating,
+          comments: service.comments,
+      })),
 
     facilities,
 
     overallComment: comment
-
 };
 
       console.log("Payload:", payload);
 
       await axios.post(
-        "http://localhost:5000/api/feedback/createfeedback",
+        `${API}/api/feedback/createfeedback`,
         payload
       );
 
@@ -93,31 +122,38 @@ setComment("");
     }
   };
 
-useEffect(() => {
-  if (!currentLocation) return;
+// useEffect(() => {
+//   if (!currentLocation) return;
 
-  const fetchServices = async () => {
-    try {
-      const res = await axios.get(
-        `http://localhost:5000/api/services/location/${currentLocation._id}`
-      );
+//   const fetchServices = async () => {
+//     try {
+//       const res = await axios.get(
+//         `${API}/api/visitor-service/${currentLocation._id}`
+//       );
 
-      const data = res.data.data.map((service) => ({
-        serviceId: service._id,
-        name: service.name,
-        service_type: service.service_type,
-        rating: 0,
-        comments: "",
-      }));
+//      const data = res.data.data.map(item=>({
 
-      setServiceRatings(data);
-    } catch (err) {
-      console.log(err);
-    }
-  };
+// serviceId:item.serviceId._id,
 
-  fetchServices();
-}, [currentLocation]);
+// name:item.serviceId.name,
+
+// service_type:item.serviceId.service_type,
+
+// rating:0,
+
+// comments:""
+
+// }));
+
+// setServiceRatings(data);
+
+//     } catch (err) {
+//       console.log(err);
+//     }
+//   };
+
+//   fetchServices();
+// }, [currentLocation]);
 
 const handleServiceRating = (index, rating) => {
   const updated = [...serviceRatings];
@@ -159,89 +195,163 @@ const renderStars = (currentRating, onRate) => {
 };
 
 
-  return (
-    <>
-      <Container className='mt-5'>
-        <form onSubmit={handleSubmit}>
+return (
+  <Container
+    className="d-flex justify-content-center align-items-center py-5"
+    style={{ minHeight: "100vh" }}
+  >
+    <motion.div
+      initial={{ opacity: 0, y: 70 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6 }}
+      style={{ width: "100%", maxWidth: "900px" }}
+    >
+      <Card className="feedback-card shadow-lg border-0">
 
-          <h2 className="text-center mb-4">Feedback Form</h2>
-          <div className="mb-3">
-            <strong>Visitor:</strong>{" "}
-            <small>{currentVisitor?.full_name || "Guest"}</small>
+        <Card.Header className="feedback-header text-center">
+          <h2 className="fw-bold mb-1">Tour Feedback</h2>
+          <p className="mb-0 text-light">
+            We'd love to hear about your experience.
+          </p>
+        </Card.Header>
+
+        <Card.Body className="p-4">
+
+          <div className="visitor-box mb-4">
+            <strong>Visitor</strong>
+            <Badge bg="success" className="ms-2 px-3 py-2">
+              {currentVisitor?.full_name || "Guest"}
+            </Badge>
           </div>
 
-          <div className="mb-4">
-    <h5>Overall Rating</h5>
+          {/* Overall Rating */}
 
-  {renderStars(overallRating, setOverallRating)}
-</div>
+          <motion.div
+            whileHover={{ scale: 1.02 }}
+            className="rating-section mb-4"
+          >
+            <h5 className="mb-3">Overall Experience</h5>
 
-       <h4>Service Ratings</h4>
+            {renderStars(overallRating, setOverallRating)}
+          </motion.div>
 
-{
-    serviceRatings.map((service,index)=>(
-        <div key={service.serviceId}
-            className="border rounded p-3 mb-3">
+          {/* Services */}
 
-            <h6>
-                {service.name}
-                ({service.service_type})
-            </h6>
+          <h4 className="mb-4 fw-bold">Service Ratings</h4>
 
-            {renderStars(
-                
-                service.rating,
-                (value)=>handleServiceRating(index,value)
-            )}
+          {serviceRatings.map((service, index) => (
+            <motion.div
+              key={service.serviceId}
+              whileHover={{
+                y: -5,
+                boxShadow: "0 15px 35px rgba(0,0,0,.15)"
+              }}
+              transition={{ duration: .2 }}
+            >
+              <Card className="service-card mb-4 border-0 shadow-sm">
 
-            <FormControl
-                className="mt-2"
-                placeholder="Comments"
-                value={service.comments}
-                onChange={(e)=>{
+                <Card.Body>
 
-                    const updated=[...serviceRatings];
+                  <div className="d-flex justify-content-between">
 
-                    updated[index].comments=e.target.value;
+                    <h5>{service.name}</h5>
 
-                    setServiceRatings(updated);
+                    <Badge bg="primary">
+                      {service.service_type}
+                    </Badge>
 
-                }}
-            />
-        </div>
-    ))
-}
+                  </div>
 
-<h4>Facilities</h4>
+                  <div className="my-3">
 
-{
-[
-"cleanliness",
-"parking",
-"washroom",
-"safety",
-"accessibility"
-].map(item=>(
+                    {renderStars(
+                      service.rating,
+                      (value) =>
+                        handleServiceRating(index, value)
+                    )}
 
-<div key={item} className="mb-3">
+                  </div>
 
-<h6>{item}</h6>
+                  <FormControl
+                    as="textarea"
+                    rows={3}
+                    placeholder="Share your experience..."
+                    value={service.comments}
+                    onChange={(e) => {
+                      const updated = [...serviceRatings];
+                      updated[index].comments = e.target.value;
+                      setServiceRatings(updated);
+                    }}
+                  />
 
-{renderStars(
-facilities[item],
-(value)=>handleFacilityRating(item,value)
-)}
+                </Card.Body>
 
-</div>
+              </Card>
+            </motion.div>
+          ))}
 
-))
-}
-<Button variant='success' type='submit'> submit</Button>
-        </form>
-      </Container>
+          {/* Facilities */}
 
-    </>
-  )
+          <h4 className="fw-bold mt-5 mb-4">
+            Facilities
+          </h4>
+
+          <div className="row">
+
+            {[
+              "cleanliness",
+              "parking",
+              "washroom",
+              "safety",
+              "accessibility"
+            ].map((item) => (
+              <div
+                className="col-lg-6 mb-3"
+                key={item}
+              >
+                <motion.div
+                  whileHover={{ scale: 1.03 }}
+                  className="facility-card"
+                >
+                  <h6 className="text-capitalize">
+                    {item}
+                  </h6>
+
+                  {renderStars(
+                    facilities[item],
+                    (value) =>
+                      handleFacilityRating(item, value)
+                  )}
+
+                </motion.div>
+              </div>
+            ))}
+
+          </div>
+
+          <div className="text-center mt-5">
+
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: .95 }}
+            >
+             <Button
+    onClick={handleSubmit}
+    size="lg"
+    className="submit-btn px-5"
+>
+    Submit Feedback
+</Button>
+            </motion.div>
+
+          </div>
+
+        </Card.Body>
+
+      </Card>
+    </motion.div>
+  </Container>
+);
 }
 
 export default FeedbackForm

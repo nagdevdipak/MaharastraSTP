@@ -10,6 +10,7 @@ import {
   CardImg, Modal
 } from 'react-bootstrap'
 import GenerateQR from './GenerateQR';
+import LocationTracker from './LocationTracker';
 import {
   FaUserPlus,
   FaCompass,
@@ -30,12 +31,13 @@ import {
   useScroll,
   useTransform
 } from "framer-motion";
-import EntrancePage from './EntrancePage';
+
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/autoplay";
 import axios from 'axios';
+import { useLocationContext } from "../src/Context/LocationContext";
 
 const picturCards = [
   { id: 1, title: "Hills", img: "anjener-hills.jpg" },
@@ -48,16 +50,8 @@ const Home = () => {
   const navigate = useNavigate()
   const { scrollY } = useScroll();
 
-const [currentLocation,setCurrentLocation] = useState(null)
 
-useEffect(() => {
-  const saved = localStorage.getItem("currentLocation");
-
-  if (saved) {
-    setCurrentLocation(JSON.parse(saved));
-    return;
-  }
-}, []);
+const { currentLocation } = useLocationContext();
 
   // background movement
   const heroBgY = useTransform(
@@ -217,6 +211,8 @@ const handlenavigation = (path) => {
       localStorage.getItem("currentVisitor")
     );
   }, []);
+
+
 
   return (
 
@@ -635,7 +631,16 @@ const handlenavigation = (path) => {
 
   <Modal.Body className="text-center p-4">
     <div className="w-100">
-      <GenerateQR location={currentLocation} />
+   <GenerateQR
+    location={currentLocation}
+    onLocationFound={(loc) => {
+        setCurrentLocation(loc);
+        localStorage.setItem(
+            "currentLocation",
+            JSON.stringify(loc)
+        );
+    }}
+/>
     </div>
 
     <p className="mt-3">
@@ -643,7 +648,9 @@ const handlenavigation = (path) => {
     </p>
   </Modal.Body>
 </Modal>
-{/* <GenerateQR onLocationFound={setCurrentLocation} /> */}
+<LocationTracker
+    onLocationFound={location}
+/>
     </div>
 
 

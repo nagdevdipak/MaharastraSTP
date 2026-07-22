@@ -47,21 +47,36 @@ useEffect(() => {
           </Nav>
         </Container>
       </Navbar>
+<Navbar
+  expand="lg"
+  bg="success"
+  className="main-nav shadow-sm"
+  sticky="top"
+>
+  <Container>
 
-       <Navbar expand="lg" className="main-nav">
-         <Container>
-             <img src="logo-removebg-preview.png" width={70} height={60} alt="" />
-          
-           <Navbar.Collapse>
-             <Nav className="ms-auto">
-               <Nav.Link as={Link} to="/">Home</Nav.Link>
-               <Nav.Link as={Link} to="/places">Locations</Nav.Link>
-         <Nav.Link as={Link} to="/services">Services</Nav.Link>
-         <NavLink as={Link} to="/ticket">Ticket</NavLink>
-             </Nav>
-           </Navbar.Collapse>
-         </Container>
-       </Navbar>
+    <Navbar.Brand as={Link} to="/">
+      <img
+        src="logo-removebg-preview.png"
+        width={70}
+        height={60}
+        alt="Logo"
+      />
+    </Navbar.Brand>
+
+    <Navbar.Toggle aria-controls="navbar-nav" />
+
+    <Navbar.Collapse id="navbar-nav">
+      <Nav className="ms-auto">
+        <Nav.Link as={Link} to="/">Home</Nav.Link>
+        <Nav.Link as={Link} to="/places">Locations</Nav.Link>
+        <Nav.Link as={Link} to="/services">Services</Nav.Link>
+        <Nav.Link as={Link} to="/ticket">Ticket</Nav.Link>
+      </Nav>
+    </Navbar.Collapse>
+
+  </Container>
+</Navbar>
     </div>
   );
 };

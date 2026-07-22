@@ -1,16 +1,18 @@
 import React, { useState,useEffect } from 'react'
-import { CardBody,Card,Row,Col, CardImg, CardText, CardTitle, Container,Button } from 'react-bootstrap'
+import { CardBody,Card,Row,Col,Form, CardImg, CardText, CardTitle, Container,Button } from 'react-bootstrap'
 import { useLocation } from 'react-router-dom'
 import "./index.css"
 import "./assets/Style.css"
   import { motion } from "framer-motion";
 import { QRCodeCanvas } from 'qrcode.react'
 import axios from 'axios'
+import { useNavigate } from "react-router-dom";
+
 
 const Services = () => {
 
 const { state } = useLocation();
-
+const navigate = useNavigate();
 const currentLocation =
   state?.currentLocation ||
   JSON.parse(localStorage.getItem("currentLocation"));
@@ -30,7 +32,7 @@ const [filter, setFilter] = useState(selectedCity);
 const [location, setLocation] = useState(selectedLocation);
 const [activeTab, setActiveTab] = useState("stay");
 const [services, setServices] = useState({});
-
+const [usedServices, setUsedServices] = useState([]);
 
 const fetchServices = async () => {
   try {
@@ -50,6 +52,28 @@ console.log("Services:", services);
 useEffect(() => {
   fetchServices();
 }, []);
+
+const selectService = (service) => {
+  const exists = usedServices.find(
+    s => s._id === service._id
+  );
+
+  if (!exists) {
+    setUsedServices(prev => [...prev, service]);
+  }
+};
+
+const useService = async(service)=>{
+
+await axios.post(
+"http://localhost:5000/api/visitor-service/create",
+{
+    visitorId:currentVisitor._id,
+    locationId:currentLocation._id,
+    serviceId:service._id
+});
+
+}
 
 const UpdateRatings = async (id, rating) => {
   try {
@@ -263,7 +287,7 @@ const renderStars = (rating) => {
   <Button
     variant='outline-dark'
     size='sm'
-    className='mt-2'
+    className='mt-2 mb-2'
     onClick={() => {
       const canvas = document.getElementById(`stay-qr-${index}`);
 
@@ -286,10 +310,32 @@ const renderStars = (rating) => {
   >
     Download QR
   </Button>
+<Row className="mt-3">
+  <Col>
+    <Form.Check
+      type="checkbox"
+      id={`service-${item._id}`}
+      label="Used this service"
+      checked={usedServices.some(
+        (service) => service._id === item._id
+      )}
+      onChange={(e) => {
+        if (e.target.checked) {
+          setUsedServices((prev) => [...prev, item]);
+        } else {
+          setUsedServices((prev) =>
+            prev.filter((service) => service._id !== item._id)
+          );
+        }
+      }}
+    />
+  </Col>
 
+</Row>
 </div>
 
                   </div>
+                  
 
                 </CardBody>
 
@@ -442,7 +488,28 @@ const renderStars = (rating) => {
   >
     See Details
   </Button>
+<Row className="mt-3">
+  <Col>
+    <Form.Check
+      type="checkbox"
+      id={`service-${item._id}`}
+      label="Used this service"
+      checked={usedServices.some(
+        (service) => service._id === item._id
+      )}
+      onChange={(e) => {
+        if (e.target.checked) {
+          setUsedServices((prev) => [...prev, item]);
+        } else {
+          setUsedServices((prev) =>
+            prev.filter((service) => service._id !== item._id)
+          );
+        }
+      }}
+    />
+  </Col>
 
+</Row>
 </div>
                   </div>
 
@@ -459,7 +526,21 @@ const renderStars = (rating) => {
       ))}
     </>
   )}
+  <Button
+  variant="primary"
+  onClick={() => {
+    console.log("Sending:", usedServices);
 
+    navigate("/feedback", {
+      state: {
+        location: currentLocation,
+        usedServices: usedServices,
+      },
+    });
+  }}
+>
+  Give Feedback
+</Button>
 </Container>
 
       </Container>

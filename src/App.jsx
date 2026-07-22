@@ -1,6 +1,5 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { lazy, Suspense } from "react";
-import EntrancePage from "./EntrancePage";
 import Navigation from "./Navigation";
 
 import "./App.css";
@@ -24,7 +23,7 @@ function App() {
           <Route path="/" element={<Home />} />
 <Route path="/service/:id" element={<ServiceDetails />} />
 
-          <Route path="/entrance" element={<EntrancePage />} />
+      
           <Route path="/registration" element={<VisitorResistrationForm />} />
           <Route path="/places" element={<Places />} />
           <Route path="/services" element={<Services />} />

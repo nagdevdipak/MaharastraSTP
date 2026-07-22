@@ -51,3 +51,86 @@
   border-radius: 50%;
 }
 
+
+
+/* Main Card */
+
+.feedback-card{
+    border-radius:25px;
+    overflow:hidden;
+    backdrop-filter:blur(20px);
+}
+
+/* Header */
+
+.feedback-header{
+    background:linear-gradient(135deg,#1abc9c,#3498db);
+    color:white;
+    padding:30px;
+}
+
+/* Visitor */
+
+.visitor-box{
+    background:#eef9ff;
+    border-radius:15px;
+    padding:15px;
+}
+
+/* Services */
+
+.service-card{
+    border-radius:18px;
+    transition:.3s;
+}
+
+.service-card textarea{
+    border-radius:12px;
+}
+
+/* Facilities */
+
+.facility-card{
+    padding:20px;
+    border-radius:18px;
+    background:white;
+    box-shadow:0 8px 25px rgba(0,0,0,.08);
+    transition:.3s;
+}
+
+/* Submit */
+
+.submit-btn{
+    border:none;
+    border-radius:40px;
+    background:linear-gradient(90deg,#16a085,#2ecc71);
+    padding:14px 45px;
+    font-weight:bold;
+}
+
+.submit-btn:hover{
+    background:linear-gradient(90deg,#27ae60,#16a085);
+}
+
+/* Stars */
+
+.star{
+    font-size:32px;
+    cursor:pointer;
+    color:#d9d9d9;
+    transition:.2s;
+}
+
+.star:hover{
+    color:#FFD700;
+    transform:scale(1.3);
+}
+
+.star.active{
+    color:#FFD700;
+}
+
+textarea:focus{
+    border-color:#3498db;
+    box-shadow:0 0 12px rgba(52,152,219,.25);
+}

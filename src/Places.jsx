@@ -49,8 +49,8 @@ const [nearestLocations, setNearestLocations] = useState([]);
     return R * c;
   };
 
-  const API ="https://tourismdbexpress.onrender.com";
-
+  // const API ="https://tourismdbexpress.onrender.com";
+const API ="http://localhost:5000"
 useEffect(() => {
   const fetchLocations = async () => {
     try {
